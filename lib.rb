@@ -33,7 +33,12 @@ class Palaver
   end
 
   def define(name=nil, &b)
-    yield
+    query = Rack::Utils.parse_query(@env['QUERY_STRING'])
+      .inject({}) do |obj, (key, value)|
+        obj[key.to_sym] = value
+        obj
+      end
+    yield(query)
   end
 
   def on(segment, &b)
@@ -48,9 +53,6 @@ class Palaver
 
   def get(&b)
     b[@req, @res] if @seg.root?
-  end
-
-  def run(app)
   end
 
   def call(env)

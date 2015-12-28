@@ -9,7 +9,7 @@ class App < Palaver
         end
 
         on(:id) do |id| # id is the path parameter
-          define(:todo) do |bar| # bar is a query parameter
+          define(:todo) do |bar:| # bar is a query parameter
             get do |req, res|
               res.write "Here, a single todo with id #{id} and bar #{bar}"
             end
