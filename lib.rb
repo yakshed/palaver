@@ -1,3 +1,5 @@
+require 'seg'
+
 class Palaver
   class Request
     def initialize(env)
@@ -6,8 +8,16 @@ class Palaver
   end
 
   class Response
+    def initialize
+      @body = []
+    end
+
+    def write(msg)
+      @body << msg
+    end
+
     def finish
-      [200, {}, ['pups']]
+      [200, {}, @body]
     end
   end
 
@@ -23,9 +33,21 @@ class Palaver
   end
 
   def define(name=nil, &b)
+    yield
   end
 
   def on(segment, &b)
+    if b.arity > 0
+      inbox = {}
+      x = @seg.capture(segment, inbox)
+      yield(inbox[segment]) if x
+    else
+      yield if @seg.consume(segment)
+    end
+  end
+
+  def get(&b)
+    b[@req, @res] if @seg.root?
   end
 
   def run(app)
@@ -35,6 +57,7 @@ class Palaver
     @env = env
     @req = Request.new(env)
     @res = Response.new
+    @seg = Seg.new(env.fetch(Rack::PATH_INFO))
 
     instance_eval(&self.class.knoedel[:code])
     @res.finish
