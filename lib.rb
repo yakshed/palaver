@@ -1,5 +1,3 @@
-require 'seg'
-
 class Palaver
   class << self
     attr_accessor :knoedel
@@ -23,23 +21,25 @@ class Palaver
 
   def on(segment, &b)
     if b.arity > 0
-      inbox = {}
-      x = @seg.capture(segment, inbox)
-      yield(inbox[segment]) if x
+      yield(@path.shift) unless @path.empty?
     else
-      yield if @seg.consume(segment)
+      if @path.first == segment
+        @path.shift
+        yield
+      end
     end
   end
 
   def get(&b)
-    b[@req, @res] if @seg.root?
+    b[@req, @res] if @path.empty?
   end
 
   def call(env)
     @env = env
     @req = Rack::Request.new(env)
     @res = Rack::Response.new
-    @seg = Seg.new(env.fetch(Rack::PATH_INFO))
+    @path = env.fetch(Rack::PATH_INFO).split('/')
+    @path.shift
 
     instance_eval(&self.class.knoedel[:code])
     @res.finish
