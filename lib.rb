@@ -1,26 +1,6 @@
 require 'seg'
 
 class Palaver
-  class Request
-    def initialize(env)
-      @env = env
-    end
-  end
-
-  class Response
-    def initialize
-      @body = []
-    end
-
-    def write(msg)
-      @body << msg
-    end
-
-    def finish
-      [200, {}, @body]
-    end
-  end
-
   class << self
     attr_accessor :knoedel
 
@@ -57,8 +37,8 @@ class Palaver
 
   def call(env)
     @env = env
-    @req = Request.new(env)
-    @res = Response.new
+    @req = Rack::Request.new(env)
+    @res = Rack::Response.new
     @seg = Seg.new(env.fetch(Rack::PATH_INFO))
 
     instance_eval(&self.class.knoedel[:code])
